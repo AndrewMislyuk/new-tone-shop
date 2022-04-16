@@ -1,10 +1,7 @@
 <template>
   <div class="catalog" v-if="filteredProducts.length">
     <div class="catalog__inner">
-      <Select
-        :selected="selected"
-        @select="sortByCategories"
-      />
+      <Select :selected="selected" @select="changeCategory" />
       <h2 class="catalog__title">{{ selected }}</h2>
       <h3 class="catalog__subtitle">Новинки</h3>
       <swiper
@@ -24,7 +21,7 @@
 import Card from '@/components/Card';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import Select from '@/components/Select';
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 
 export default {
   components: {
@@ -37,49 +34,28 @@ export default {
   data() {
     return {
       selected: 'Все',
-      products: [],
-      sortedProducts: [],
-      
     };
   },
 
   computed: {
-    filteredProducts() {
-      if (this.sortedProducts.length) {
-        return this.sortedProducts;
-      } else {
-        return this.products;
-      }
-    },
-  },
+    ...mapGetters(['PRODUCTS']),
 
-  beforeMount() {
-    this.initProducts();
+    filteredProducts() {
+      return this.selected === 'Все'
+        ? this.PRODUCTS
+        : this.PRODUCTS.filter((f) => f.category === this.selected);
+    },
   },
 
   methods: {
-    ...mapActions(['GET_PRODUCTS_FROM_API', 'ADD_TO_CART']),
-
-    async initProducts() {
-      this.products = await this.GET_PRODUCTS_FROM_API();
-    },
+    ...mapActions(['ADD_TO_CART']),
 
     addToCart(data) {
       this.ADD_TO_CART(data);
     },
 
-    sortByCategories(category) {
-      this.selected = category.name;
-      this.sortedProducts = [];
-      this.products.forEach((item) => {
-        if (item.category === category.name) {
-          this.sortedProducts.push(item);
-        } else if (!category.value) {
-          this.sortedProducts = this.products.slice();
-        }
-      });
-
-      // Убрал (item.category_id === category.value) - с этим не работает сортировка
+    changeCategory(data) {
+      this.selected = data.name;
     },
   },
 };

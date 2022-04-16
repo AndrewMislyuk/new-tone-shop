@@ -17,15 +17,13 @@
 
 <script>
 import Card from '@/components/Card.vue';
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'women',
   data() {
     return {
       pageCategory: 'Женщинам',
-      products: [],
-      sortedProducts: [],
     };
   },
   components: {
@@ -33,31 +31,10 @@ export default {
   },
   computed: {
     ...mapGetters(['PRODUCTS']),
+
     filteredProducts() {
-      if (this.sortedProducts.length) {
-        return this.sortedProducts;
-      } else {
-        return null;
-      }
+      return this.PRODUCTS.filter((f) => f.category === this.pageCategory);
     },
-  },
-
-  methods: {
-    ...mapActions(['ADD_TO_CART']),
-
-    sortByCategory() {
-      this.PRODUCTS.forEach((item) => {
-        if (item.category === this.pageCategory) {
-          this.sortedProducts.push(item);
-        } else {
-            return
-        }
-      });
-    },
-  },
-
-  mounted() {
-    this.sortByCategory();
   },
 };
 </script>
