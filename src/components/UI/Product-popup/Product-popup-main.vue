@@ -125,14 +125,11 @@ export default {
     ...mapGetters(['CART']),
 
     productAlreadyInCart: function() {
-      return this.CART.find((item) => {
-        if (
-          String(item.product.id + item.size) ==
-          String(this.popup_data.id + this.productSize)
-        ) {
-          return true;
-        }
-      });
+      return this.CART.find(
+        (item) =>
+          `${item.product.id}${item.size}` ===
+          `${this.popup_data.id}${this.productSize}`
+      );
     },
   },
   methods: {

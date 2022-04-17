@@ -2,15 +2,15 @@
   <transition name="popup__appear">
     <product-popup>
       <product-popup-main
-        :popup_data="filteredProducts[this.popupId]"
-        :popupItemSize="this.itemSize"
+        :popup_data="currentItem"
+        :popupItemSize="itemSize"
       />
     </product-popup>
   </transition>
 
   <div class="catalog" v-if="filteredProducts.length">
     <div class="catalog__inner">
-      <Select :selected="selected" @select="sortByCategories" />
+      <Select :selected="selected" @select="changeCategory" />
       <h2 class="catalog__title">{{ selected }}</h2>
       <h3 class="catalog__subtitle">Новинки</h3>
       <swiper
@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import Card from '@/components/Card';
 import Select from '@/components/Select';
@@ -47,54 +47,39 @@ export default {
   data() {
     return {
       selected: 'Все',
-      products: [],
-      sortedProducts: [],
-      popupId: 0,
+      currentItem: null,
       itemSize: '',
     };
   },
 
   computed: {
+    ...mapGetters(['PRODUCTS']),
+
     filteredProducts() {
-      if (this.sortedProducts.length) {
-        return this.sortedProducts;
-      } else {
-        return this.products;
-      }
+      return this.selected === 'Все'
+        ? this.PRODUCTS
+        : this.PRODUCTS.filter((f) => f.gender === this.selected);
     },
   },
 
   beforeMount() {
-    this.initProducts();
     this.getItemSizeFromCard();
   },
 
   methods: {
-    ...mapActions(['GET_PRODUCTS_FROM_API', 'ADD_TO_CART']),
-
-    async initProducts() {
-      this.products = await this.GET_PRODUCTS_FROM_API();
-    },
+    ...mapActions(['ADD_TO_CART']),
 
     getItemSizeFromCard(currentSize) {
-      return (this.itemSize = currentSize);
+      this.itemSize = currentSize;
     },
-    sortByCategories(category) {
-      this.selected = category.name;
-      this.sortedProducts = [];
-      this.products.forEach((item) => {
-        if (item.gender === category.name) {
-          this.sortedProducts.push(item);
-        } else if (!category.value) {
-          this.sortedProducts = this.products.slice();
-        }
-      });
 
-      // Убрал (item.category_id === category.value) - с этим не работает сортировка
+    changeCategory(category) {
+      this.selected = category.name;
     },
 
     GetPopupData(id) {
-      return (this.popupId = id);
+      const arr = this.filteredProducts.filter((f) => f.id === id);
+      this.currentItem = arr[0];
     },
   },
 };

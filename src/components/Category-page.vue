@@ -1,20 +1,15 @@
 <template>
   <product-popup>
-    <product-popup-main
-      :popup_data="filteredProducts[this.popupId]"
-      :popupItemSize="this.itemSize"
-    />
+    <product-popup-main :popup_data="currentItem" :popupItemSize="itemSize" />
   </product-popup>
   <div class="category-page">
     <div class="container">
       <h2 class="category-page__title">
-        {{ this.pageGender }}
-        <span v-if="this.pageCategory"
-          >- {{ this.$route.params.category }}</span
-        >
+        {{ pageGender }}
+        <span v-if="pageCategory"> - {{ pageCategory }} </span>
       </h2>
       <section class="category-page__inner">
-        <div class="attention" v-if="this.sortedProducts.length == 0">
+        <div class="attention" v-if="!filteredProducts.length">
           К сожалению данного типа товара нет на складе:(
         </div>
         <div
@@ -41,11 +36,7 @@ import { mapGetters, mapActions } from 'vuex';
 export default {
   data() {
     return {
-      pageCategory: this.$route.params.category,
-      pageGender: this.$route.params.gender,
-      products: [],
-      sortedProducts: [],
-      popupId: 0,
+      currentItem: null,
       itemSize: '',
       Error: false,
     };
@@ -55,49 +46,39 @@ export default {
   },
   computed: {
     ...mapGetters(['PRODUCTS']),
+
+    pageCategory() {
+      return this.$route.params.category;
+    },
+
+    pageGender() {
+      return this.$route.params.gender;
+    },
+
     filteredProducts() {
-      if (this.sortedProducts.length) {
-        return this.sortedProducts;
-      } else {
-        return null;
-      }
+      return this.pageCategory
+        ? this.PRODUCTS.filter(
+            (f) =>
+              f.gender === this.pageGender && f.category === this.pageCategory
+          )
+        : this.PRODUCTS.filter((f) => f.gender === this.pageGender);
     },
   },
 
   methods: {
     ...mapActions(['ADD_TO_CART']),
+
     getItemSizeFromCard(currentSize) {
       return (this.itemSize = currentSize);
     },
-    sortByCategory() {
-      if (this.pageCategory) {
-        this.PRODUCTS.forEach((item) => {
-          if (
-            item.gender == this.pageGender &&
-            item.category == this.pageCategory
-          ) {
-            return this.sortedProducts.push(item);
-          } else {
-            return;
-          }
-        });
-      } else if (!this.pageCategory) {
-        this.PRODUCTS.forEach((item) => {
-          if (item.gender == this.pageGender) {
-            return this.sortedProducts.push(item);
-          } else {
-            return;
-          }
-        });
-      }
-    },
+
     GetPopupData(id) {
-      this.popupId = id;
+      const arr = this.filteredProducts.filter((f) => f.id === id);
+      this.currentItem = arr[0];
     },
   },
 
   mounted() {
-    this.sortByCategory();
     this.getItemSizeFromCard();
   },
 };
