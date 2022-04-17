@@ -1,4 +1,13 @@
 <template>
+  <transition name="popup__appear">
+    <product-popup>
+      <product-popup-main
+        :popup_data="currentItem"
+        :popupItemSize="itemSize"
+      />
+    </product-popup>
+  </transition>
+
   <div class="catalog" v-if="filteredProducts.length">
     <div class="catalog__inner">
       <Select :selected="selected" @select="changeCategory" />
@@ -10,7 +19,11 @@
         :navigation="{ clickable: true }"
       >
         <swiper-slide v-for="(product, id) in filteredProducts" :key="id">
-          <Card :product_data="product" @addToCart="addToCart" />
+          <Card
+            :product_data="product"
+            @chosenItemSize="getItemSizeFromCard"
+            @popup_data="GetPopupData(id)"
+          />
         </swiper-slide>
       </swiper>
     </div>
@@ -18,10 +31,10 @@
 </template>
 
 <script>
-import Card from '@/components/Card';
-import { Swiper, SwiperSlide } from 'swiper/vue';
-import Select from '@/components/Select';
 import { mapActions, mapGetters } from 'vuex';
+import { Swiper, SwiperSlide } from 'swiper/vue';
+import Card from '@/components/Card';
+import Select from '@/components/Select';
 
 export default {
   components: {
@@ -34,6 +47,8 @@ export default {
   data() {
     return {
       selected: 'Все',
+      currentItem: null,
+      itemSize: '',
     };
   },
 
@@ -43,19 +58,28 @@ export default {
     filteredProducts() {
       return this.selected === 'Все'
         ? this.PRODUCTS
-        : this.PRODUCTS.filter((f) => f.category === this.selected);
+        : this.PRODUCTS.filter((f) => f.gender === this.selected);
     },
+  },
+
+  beforeMount() {
+    this.getItemSizeFromCard();
   },
 
   methods: {
     ...mapActions(['ADD_TO_CART']),
 
-    addToCart(data) {
-      this.ADD_TO_CART(data);
+    getItemSizeFromCard(currentSize) {
+      this.itemSize = currentSize;
     },
 
-    changeCategory(data) {
-      this.selected = data.name;
+    changeCategory(category) {
+      this.selected = category.name;
+    },
+
+    GetPopupData(id) {
+      const arr = this.filteredProducts.filter((f) => f.id === id);
+      this.currentItem = arr[0];
     },
   },
 };

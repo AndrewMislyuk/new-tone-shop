@@ -9,18 +9,23 @@ export default {
       { name: 'Мужчинам', value: 1 },
       { name: 'Женщинам', value: 2 },
     ],
-    affiliates: [
+    filiations: [
       {
+        image: '1.webp',
         adress: 'Новорязанская ул., 18, стр. 11',
         phone_number: '7 800 555-10-61',
         timetable: 'пн-пт 10:00-19:00',
+        id: 1,
       },
       {
+        image: '2.webp',
         adress: 'г. Москва, ул. Новорязанская, 18, стр. 11',
         phone_number: '7 495 649-83-14',
         timetable: 'пн-пт 10:00-20:00',
+        id: 2,
       },
     ],
+    showPopup: false,
   },
 
   getters: {
@@ -31,19 +36,33 @@ export default {
       return state.cart;
     },
     CART_ITEMS_COUNT(state) {
-      return state.cart.length;
+      Array.prototype.sum = function(prop) {
+        let totalCount = 0;
+        for (let i = 0; i < this.length; i++) {
+          totalCount += this[i][prop];
+        }
+        return totalCount;
+      };
+      return state.cart.sum('quantity');
     },
     CART_TOTAL_PRICE(state) {
-      let total = 0;
+      let totalPrice = 0;
 
       state.cart.forEach((item) => {
-        total += item.product.price * item.quantity;
+        totalPrice += item.product.price * item.quantity;
       });
 
-      return total;
+      return totalPrice;
     },
     CATEGORIES(state) {
       return state.categories;
+    },
+
+    FILIATION(state) {
+      return state.filiations;
+    },
+    GET_POPUP(state) {
+      return state.showPopup;
     },
   },
   actions: {
@@ -66,12 +85,12 @@ export default {
       }
     },
 
-    ADD_TO_CART({ commit }, { product, quantity }) {
-      commit('SET_TO_CART', { product, quantity });
+    ADD_TO_CART({ commit }, { product, quantity, size, uniqueCartItemIndex }) {
+      commit('SET_TO_CART', { product, quantity, size, uniqueCartItemIndex });
     },
 
-    removeProductFromCart({ commit }, product) {
-      commit('REMOVE_PRODUCT_FROM_CART', product);
+    REMOVE_PRODUCT_FROM_CART({ commit }, uniqueCartItemIndex) {
+      commit('REMOVE_PRODUCT_FROM_CART', uniqueCartItemIndex);
     },
 
     INCREMENT_CART_ITEM({ commit }, index) {
@@ -80,29 +99,44 @@ export default {
     DECREMENT_CART_ITEM({ commit }, index) {
       commit('DECREMENT', index);
     },
+    GET_CART_ITEM_SIZE({ commit }, event) {
+      commit('SET_CART_ITEM_SIZE', event);
+    },
+    SHOW_PRODUCT_POPUP({ commit }) {
+      commit('CHANGE_POPUP_VALUE');
+    },
+    CLOSE_PRODUCT_POPUP({ commit }) {
+      commit('CHANGE_POPUP_VALUE');
+    },
   },
 
   mutations: {
     SET_PRODUCTS_TO_STATE: (state, products) => {
       state.products = products;
     },
-    SET_TO_CART: (state, { product, quantity }) => {
-      let productInCart = state.cart.find((item) => {
-        return item.product.id === product.id;
+
+    SET_TO_CART: (state, { product, quantity, size, uniqueCartItemIndex }) => {
+      let productInCart = state.cart.find((cart_item) => {
+        return cart_item.product.id === product.id && cart_item.size === size;
       });
 
       if (productInCart) {
         productInCart.quantity += quantity;
+
         return;
       }
 
-      state.cart.push({ product, quantity });
+      state.cart.push({ product, quantity, size, uniqueCartItemIndex });
     },
 
-    REMOVE_PRODUCT_FROM_CART: (state, product) => {
-      state.cart = state.cart.filter((item) => {
-        return item.product.id !== product.id;
+    REMOVE_PRODUCT_FROM_CART: (state, uniqueCartItemIndex) => {
+      state.cart = state.cart.filter((cart_item) => {
+        return cart_item.uniqueCartItemIndex !== uniqueCartItemIndex;
       });
+
+      // state.cart = state.cart.filter((cart_item) => {
+      //   return cart_item.uniqueCartItemIndex !== uniqueCartItemIndex;
+      // });
     },
     INCREMENT: (state, index) => {
       state.cart[index].quantity++;
@@ -113,6 +147,9 @@ export default {
       } else {
         return 1;
       }
+    },
+    CHANGE_POPUP_VALUE: (state) => {
+      return (state.showPopup = !state.showPopup);
     },
   },
 };
